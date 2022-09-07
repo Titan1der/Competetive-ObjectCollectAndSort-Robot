@@ -11,10 +11,10 @@
 #define stop            0x00                                                    //00000000
 
 //------Troubleshooting------
-//PORTC PIN0 = something wrong with main
-//PORTC PIN1 = wa na tarung ang ligid, dpat 11 or 00 ang rotary sensor
-//PORTC PIN2 = COLOR BLUE IS DETECTED
-//PORTC PIN3 = COLOR RED IS DETECTED
+//PORTC PIN0 = Current phase of the machine
+//PORTC PIN1 = Wheels not aligned: Rotary Sensor should be aligned to 00 or 11
+//PORTC PIN2 = Color blue is detected
+//PORTC PIN3 = Color red is detected
 
 //------PIN CONFIGURATION------
 //PORTB PIN0-PIN1 -> Motor1(Right Motor)
@@ -31,7 +31,7 @@ unsigned char nextStep, colorDetected, rotary1;
 unsigned char rotary2 = 0x03;
 
 void func_moveForwardStraight() {
-     //BAKUKANG INDICATOR
+     // Set wheels to move forward
      if ((PORTD.F0 == 0x00 && PORTD.F1 == 0x00) == 1) {
         PORTB = moveForward;
         rotary1 = 0x00;
@@ -48,7 +48,7 @@ void func_moveForwardStraight() {
           rotary1 = 0x01;
      }
 
-     //BAKUKANG NAGKAMANG
+     // If wheels are not aligned (i.e. operating at different speeds), then align them
      if (rotary1 == 0x01) {
         if (rotary2 == 0x00) {
            if (PORTD.F0 == 1) {                                                 //If nag-una ang motor1
@@ -82,12 +82,12 @@ void func_moveBackwardStraight() {
 
 }
 
-//------ROAMING------
+// Roaming Phase
 void func_Roaming() {
 
      func_moveForwardStraight();
 
-     //BAKUKANG DETECTS BOX
+     // When a box is detected
      if (PORTD.F2 == 1) {
         PORTB = stop;
         nextStep = 0x01;
@@ -95,10 +95,11 @@ void func_Roaming() {
      }
 }
 
-//------GET BOX------
+// Getting the box Phase
 void func_getBox() {
      int i;
      
+     // Estimate to "< 39" since there are no visual indicators in arena
      for (i = 0; i < 39; i++) {
          func_moveForwardStraight();
          Delay_ms(50);
@@ -111,7 +112,7 @@ void func_getBox() {
      nextStep = 0x02;
 }
 
-//------DETECT COLOR------
+// Detect color of box Phase
 void func_detectColor() {
      if (PORTD.F3 == 0) {
         PORTC.F2 = 0x01;
@@ -126,7 +127,7 @@ void func_detectColor() {
      nextStep = 0x03;
 }
 
-//------GO HOME------
+// Going back to home base Phase
 void func_goHome() {
      //TEMPORARY
      PORTB = moveBackward;
@@ -135,7 +136,7 @@ void func_goHome() {
      nextStep = 0x04;
 }
 
-//------SORT BOX------
+// Sorting the box Phase
 void func_sortBox() {
      if (colorDetected == 0) {
         PORTB = turnRight;
@@ -164,6 +165,7 @@ void func_sortBox() {
      nextStep = 0x00;
 }
 
+// Program starts here
 void main() {
      ADCON1 = 0x06;
      CMCON = 0x07;
